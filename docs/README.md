@@ -241,6 +241,7 @@ bluetoothctl
 | 计时器不走 | 未按确认键启动 | 短按确认键(F5)启动计时器 |
 | 编译报 `idf_component.yml` 错误 | 未联网或代理问题 | 检查网络，确保能访问 `components.espressif.com` |
 | 能连接但按键无效，设备管理器无键盘 | 电脑缓存了旧配对 / 描述符变更后未重配对 | 删除旧配对重启电脑后重新配对 |
+| 换电脑 / 配对反复失败 | 设备侧残留旧绑定密钥 | 设备上长按上键、3 秒内再长按下键重置配对（见 README「蓝牙配对重置」）；或 `idf.py -p COM3 erase-flash` 全擦后重新烧录 |
 | 改配置后行为诡异 | 切换协议栈后未全量清理 | `rd /s /q build && del sdkconfig && idf.py build` |
 | 烧录失败 | USB 线仅充电 / 驱动未装 | 换数据线，安装 [CP210x/CH340 驱动](https://docs.espressif.com/projects/esp-idf/en/latest/esp32c3/get-started/establish-serial-connection.html) |
 | `ble_gatts_count_resources rc=3` | NOTIFY 特征手动加了 CCCD | 删除手动 CCCD，框架自动创建 |

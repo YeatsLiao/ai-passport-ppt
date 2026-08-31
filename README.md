@@ -14,6 +14,7 @@
 | 下键 | 短按 | 下一页 (`→`) |
 | 确认键 | 短按 | 进入放映 (`F5`) + 启动演讲计时器 |
 | 确认键 | 长按 | 退出放映 (`Esc`) + 停止计时器 |
+| 上键 → 下键 | 先后长按 | 重置蓝牙配对（清除绑定并重启） |
 
 屏幕实时显示：电池电量（右上，BAT 前缀）、蓝牙连接状态、演讲计时器、当前操作反馈。
 
@@ -30,6 +31,7 @@
 > 更换固件后如按键失效，请在电脑蓝牙中忽略旧配对后重新配对。
 
 ## 快速上手（完整安装教程）
+
 
 ### 1. 安装 ESP-IDF
 
@@ -51,6 +53,8 @@ git clone https://github.com/YeatsLiao/ai-passport-ppt.git
 cd ai-passport-ppt
 idf.py set-target esp32c3
 idf.py build
+idf.py merge-bin
+copy build\merged-binary.bin build\ai-passport-ppt-full.bin
 ```
 
 ### 3. 烧录
@@ -62,6 +66,8 @@ idf.py -p COM3 flash monitor
 # Linux/macOS
 idf.py -p /dev/ttyACM0 flash monitor
 ```
+
+烧录完成后设备自动开启蓝牙广播，屏幕显示 `PPT Remote` 界面。
 
 ### 4. 配对
 
@@ -89,24 +95,23 @@ idf.py -p /dev/ttyACM0 flash monitor
 
 核心技术：BLE HID **Boot Keyboard**（8 字节标准键盘报告），全平台免驱。详见 [开发文档](docs/README.md)。
 
-## 构建预编译固件（可选）
+## 烧录预编译固件（可选）
 
-```bash
-idf.py build
-idf.py merge-bin
-copy build\merged-binary.bin ai-passport-ppt-full.bin
-```
-
-**固件命名**：`ai-passport-ppt-full.bin`
-
-- `full` = 从 `0x0` 整片烧录的合并镜像（含 bootloader + 分区表 + 应用）
-- 由 `idf.py merge-bin` 生成 `build/merged-binary.bin` 后重命名，版本 v1.0.0
-
-烧录预编译固件：
+从 Releases 下载 `ai-passport-ppt-full.bin`，使用 `esptool.py` 从 `0x0` 一步烧录（镜像已含 bootloader + 分区表 + 应用）：
 
 ```bash
 esptool.py --chip esp32c3 -p COM3 --baud 460800 write_flash 0x0 ai-passport-ppt-full.bin
 ```
+
+> 将 `COM3` 替换为设备实际串口号。Windows 可在设备管理器中查看。
+
+## 蓝牙配对重置
+
+更换电脑或配对异常时，无需连电脑擦 Flash：
+
+1. **长按上键** → 屏幕显示 `RESET: hold DOWN`（橙色）
+2. **3 秒内长按下键** → 屏幕显示 `RESETTING...`，设备清除所有配对并重启，回到全新配对状态
+3. 电脑上删除旧的 `PPT-Remote` 配对，重新搜索连接即可
 
 ## 文档
 
@@ -140,6 +145,7 @@ The device talks to your PC over Bluetooth by emulating a **standard keyboard** 
 | Down | Click | Next slide (`→`) |
 | OK | Click | Start slideshow (`F5`) + start timer |
 | OK | Long press | Exit slideshow (`Esc`) + stop timer |
+| Up → Down | Long press each | Reset Bluetooth pairing (clear bonds & reboot) |
 
 The screen shows battery level with a BAT prefix (top-right), Bluetooth connection status, presentation timer, and the last action.
 
@@ -159,15 +165,35 @@ The screen shows battery level with a BAT prefix (top-right), Bluetooth connecti
 
 Requires [ESP-IDF](https://docs.espressif.com/projects/esp-idf/en/latest/esp32c3/) v5.x (ESP32-C3 target).
 
+### Build from source
+
 ```bash
 git clone https://github.com/YeatsLiao/ai-passport-ppt.git
 cd ai-passport-ppt
 idf.py set-target esp32c3
 idf.py build
+idf.py merge-bin
+copy build\merged-binary.bin build\ai-passport-ppt-full.bin
 idf.py -p COM3 flash monitor   # Replace COM3 with your serial port
 ```
 
+### Flash prebuilt firmware
+
+Download `ai-passport-ppt-full.bin` from Releases and flash from `0x0` with `esptool.py` (the merged image includes bootloader + partition table + app):
+
+```bash
+esptool.py --chip esp32c3 -p COM3 --baud 460800 write_flash 0x0 ai-passport-ppt-full.bin
+```
+
 For detailed installation guide, troubleshooting, and architecture details, see [full documentation](docs/README.md).
+
+## Reset Bluetooth pairing
+
+When switching computers or when pairing goes wrong, no PC or flash erasing needed:
+
+1. **Long press UP** → the screen shows `RESET: hold DOWN` (orange)
+2. **Long press DOWN within 3 seconds** → the screen shows `RESETTING...`; the device wipes all bonds and reboots into a fresh pairing state
+3. Remove the old `PPT-Remote` pairing on your PC, then search and pair again
 
 ## License
 

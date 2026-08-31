@@ -182,7 +182,8 @@ ai-passport-ppt-full.bin
 ```
 
 - `full` = 从 `0x0` 整片烧录的合并镜像（含 bootloader + 分区表 + 应用），
-  由 `idf.py build && idf.py merge-bin` 生成 `build/merged-binary.bin` 后重命名。
+  由 `idf.py merge-bin` 生成 `build/merged-binary.bin` 后
+  `copy build\merged-binary.bin build\ai-passport-ppt-full.bin` 重命名。
 - 当前版本 v1.0.0：翻页遥控 + 跨平台开始放映 + BAT 电量前缀。
   发布到 FoloToy AI Passport 社区的固件即此合并镜像。
 
@@ -207,3 +208,29 @@ ai-passport-ppt-full.bin
 - 按下保持 50ms → **120ms**（`KEY_HOLD_MS`）
 - 组合键间隔 80ms → **200ms**（`KEY_COMBO_GAP_MS`）
 - 三套快捷键总耗时约 1.4s，属于可接受范围；未命中平台的组合仍无副作用
+
+---
+
+## 2026-08-31 — 设备端蓝牙配对重置（无需连电脑）
+
+### 背景与硬件约束
+
+更换固件/电脑后旧的绑定密钥残留会导致配对异常，之前只能电脑侧忽略配对或连线擦 Flash。
+想做成按键重置，但按键是**单 ADC 分压方案**（三键共用一个 ADC），
+双键同按产生并联电阻电压，不在任何键的识别窗口内，
+「上+下同时长按」在硬件上不可行，故改用两步组合。
+
+### 实现（两步组合）
+
+1. **长按上键**武装：屏幕显示 `RESET: hold DOWN`（橙色），开始 3 秒窗口；
+   其他按键解除武装。
+2. **3 秒内长按下键**触发：屏幕显示 `RESETTING...`，500ms 后执行重置。
+3. 重置实现 `ble_hid_reset_bonding()`：Bluedroid 绑定密钥全部存在 NVS，
+   `nvs_flash_erase()` + `esp_restart()` 即回到未配对状态重新广播（不返回）。
+
+### 文档补齐（对齐 tiktok-remote 风格）
+
+README 构建烧录命令补全为完整链条：从源码构建（`idf.py build` + `idf.py merge-bin` +
+`copy build\merged-binary.bin build\ai-passport-ppt-full.bin` + `idf.py -p COMx flash monitor`）
+与烧录预编译固件（`esptool.py --chip esp32c3 -p COMx --baud 460800 write_flash 0x0 ai-passport-ppt-full.bin`）
+两节，中英文同步。
