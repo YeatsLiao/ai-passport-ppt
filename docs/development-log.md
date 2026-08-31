@@ -135,3 +135,34 @@
 4. 修改 HID 描述符/服务结构后，必须在电脑蓝牙里**删除旧配对**再重新配对，
    Windows 会缓存旧设备的 GATT 信息
 5. ESP32-C3 只支持 BLE，不支持经典蓝牙（BR/EDR），无法走传统蓝牙 HID 路线
+
+---
+
+## 2026-08-31 — macOS 无法进入放映：F5 不是 Mac 的放映快捷键（已修复）
+
+### 现象与原因
+
+设备在 Windows 全部正常，但接 macOS 时确认键无法进入放映。
+原因：**F5 只是 Windows 系软件的约定**（PowerPoint/WPS/LibreOffice），
+macOS 各家软件的放映快捷键完全不同：
+
+| 软件 | 开始放映快捷键 |
+|------|----------------|
+| Windows PowerPoint / WPS / LibreOffice | F5 |
+| macOS PowerPoint | ⌘⇧⏎ (Cmd+Shift+Return) |
+| macOS Keynote | ⌥⌘P (Option+Cmd+P) |
+
+BLE 键盘只能发按键，无法感知对端是什么系统。
+
+### 解法：一次击键发三套快捷键（`ble_hid_press_start_slideshow`）
+
+确认键短按时依次发送：
+1. `F5`
+2. `Cmd+Shift+Return`（修饰键位图 0x0A + Return 0x28）
+3. `Alt+Cmd+P`（修饰键位图 0x0C + P 0x13）
+
+未命中的组合在对应平台上均无快捷键绑定，无副作用（如 Windows 上
+Win+Shift+Enter / Win+Alt+P 均无默认行为）。各击键间隔 80ms 避免被吞。
+
+新增 API：`ble_hid_key_press_mod(modifier, keycode)` 支持带修饰键击键；
+修饰键位图遵循 HID Usage Tables（L-Shift=0x02, L-Alt=0x04, L-GUI/Cmd=0x08）。

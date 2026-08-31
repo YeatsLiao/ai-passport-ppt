@@ -32,6 +32,15 @@ static const char *TAG = "ble_hid";
 #define HID_KEYBOARD_REPORT_ID  1
 #define HID_BATTERY_LEVEL       100
 
+// 修饰键位图（HID Usage Tables）
+#define HID_MOD_LEFT_SHIFT      0x02
+#define HID_MOD_LEFT_ALT        0x04
+#define HID_MOD_LEFT_GUI        0x08  // macOS 的 Cmd / Windows 的 Win
+
+// 跨平台快捷键用键码
+#define HID_KEY_F5              0x3E
+#define HID_KEY_RETURN          0x28
+
 // ================================================================
 // 键盘 Report Map (Report ID = 1)
 // 输入报告 8 字节: [modifier][reserved][key0..key5]
@@ -347,7 +356,8 @@ esp_err_t ble_hid_init(void)
     return ESP_OK;
 }
 
-void ble_hid_key_press(uint8_t keycode)
+// 内部：发送一次带修饰键的击键（按下 → 延时 → 释放）
+static void send_key_press(uint8_t modifier, uint8_t keycode)
 {
     if (s_hid_dev == NULL || !s_connected || !s_auth_ok) {
         ESP_LOGW(TAG, "Key 0x%02X ignored: not connected/authenticated", keycode);
@@ -356,6 +366,7 @@ void ble_hid_key_press(uint8_t keycode)
 
     // 8 字节报告: [modifier][reserved][key0..key5]
     uint8_t report[8] = {0};
+    report[0] = modifier;
     report[2] = keycode;  // 按下
 
     esp_err_t err = esp_hidd_dev_input_set(s_hid_dev, 0, HID_KEYBOARD_REPORT_ID, report, sizeof(report));
@@ -371,6 +382,29 @@ void ble_hid_key_press(uint8_t keycode)
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "input_set (release) failed: %d", err);
     }
+}
+
+void ble_hid_key_press(uint8_t keycode)
+{
+    send_key_press(0, keycode);
+}
+
+void ble_hid_key_press_mod(uint8_t modifier, uint8_t keycode)
+{
+    send_key_press(modifier, keycode);
+}
+
+void ble_hid_press_start_slideshow(void)
+{
+    // 依次发送三套快捷键，覆盖主流演示软件（未命中的组合在对应平台上无绑定，无副作用）：
+    //   1. F5           → Windows PowerPoint / WPS / LibreOffice Impress
+    //   2. Cmd+Shift+Return → macOS PowerPoint
+    //   3. Alt+Cmd+P    → macOS Keynote
+    send_key_press(0, HID_KEY_F5);
+    vTaskDelay(pdMS_TO_TICKS(80));
+    send_key_press(HID_MOD_LEFT_GUI | HID_MOD_LEFT_SHIFT, HID_KEY_RETURN);
+    vTaskDelay(pdMS_TO_TICKS(80));
+    send_key_press(HID_MOD_LEFT_GUI | HID_MOD_LEFT_ALT, 0x13);  // 0x13 = P
 }
 
 bool ble_hid_is_connected(void)

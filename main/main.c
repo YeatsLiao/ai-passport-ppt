@@ -3,7 +3,7 @@
 // BLE HID Keyboard 遥控器，控制 PPT 翻页:
 //   上键 短按 → Left Arrow  (上一页)
 //   下键 短按 → Right Arrow (下一页)
-//   确认键 短按 → F5        (进入幻灯片放映 + 启动计时器)
+//   确认键 短按 → 开始放映（F5 / macOS Cmd+Shift+Return / Keynote Opt+Cmd+P，自动兼容）
 //   确认键 长按 → Escape    (退出放映 + 停止计时器)
 //
 // 兼容: PowerPoint / WPS / LibreOffice Impress / Keynote
@@ -29,7 +29,6 @@ static const char *TAG = "main";
 // ================================================================
 #define HID_KEY_LEFT_ARROW  0x50
 #define HID_KEY_RIGHT_ARROW 0x4F
-#define HID_KEY_F5          0x3E
 #define HID_KEY_ESCAPE      0x29
 
 // ================================================================
@@ -147,9 +146,9 @@ static void on_key(bsp_btn_t btn, bsp_btn_ev_t ev, void *user)
 
     case BSP_BTN_OK:
         if (ev == BSP_BTN_CLICK) {
-            // 短按: F5 进入放映
-            ESP_LOGI(TAG, "OK -> F5 (start slideshow)");
-            ble_hid_key_press(HID_KEY_F5);
+            // 短按: 开始放映（跨平台: Windows F5 / macOS PPT Cmd+Shift+Return / Keynote Opt+Cmd+P）
+            ESP_LOGI(TAG, "OK -> start slideshow (cross-platform)");
+            ble_hid_press_start_slideshow();
 
             // 计时器: 仅首次 F5 启动, 后续按不重复重置
             if (!s_pres_running) {
