@@ -40,6 +40,12 @@ static const char *TAG = "ble_hid";
 // 跨平台快捷键用键码
 #define HID_KEY_F5              0x3E
 #define HID_KEY_RETURN          0x28
+#define HID_KEY_P               0x13
+
+// 击键时序（macOS 对组合键的按住时长/间隔要求比 Windows 宽松得多，
+// 按住太短会被 macOS 丢弃；加大到 120ms/200ms 保证双平台可靠）
+#define KEY_HOLD_MS             120   // 按下保持时长（含组合键）
+#define KEY_COMBO_GAP_MS        200   // 连续组合键之间的间隔
 
 // ================================================================
 // 键盘 Report Map (Report ID = 1)
@@ -375,7 +381,7 @@ static void send_key_press(uint8_t modifier, uint8_t keycode)
         return;
     }
 
-    vTaskDelay(pdMS_TO_TICKS(50));
+    vTaskDelay(pdMS_TO_TICKS(KEY_HOLD_MS));
 
     memset(report, 0, sizeof(report));  // 释放
     err = esp_hidd_dev_input_set(s_hid_dev, 0, HID_KEYBOARD_REPORT_ID, report, sizeof(report));
@@ -401,10 +407,10 @@ void ble_hid_press_start_slideshow(void)
     //   2. Cmd+Shift+Return → macOS PowerPoint
     //   3. Alt+Cmd+P    → macOS Keynote
     send_key_press(0, HID_KEY_F5);
-    vTaskDelay(pdMS_TO_TICKS(80));
+    vTaskDelay(pdMS_TO_TICKS(KEY_COMBO_GAP_MS));
     send_key_press(HID_MOD_LEFT_GUI | HID_MOD_LEFT_SHIFT, HID_KEY_RETURN);
-    vTaskDelay(pdMS_TO_TICKS(80));
-    send_key_press(HID_MOD_LEFT_GUI | HID_MOD_LEFT_ALT, 0x13);  // 0x13 = P
+    vTaskDelay(pdMS_TO_TICKS(KEY_COMBO_GAP_MS));
+    send_key_press(HID_MOD_LEFT_GUI | HID_MOD_LEFT_ALT, HID_KEY_P);
 }
 
 bool ble_hid_is_connected(void)
