@@ -36,7 +36,7 @@ static const char *TAG = "main";
 // ================================================================
 static lv_obj_t *s_action_label;    // 当前操作反馈
 static lv_obj_t *s_conn_label;      // 连接状态
-static lv_obj_t *s_battery_label;   // 电量
+static lv_obj_t *s_battery_label;   // 电量 (右上角, 带 BAT 前缀)
 static lv_obj_t *s_timer_label;     // 演讲计时器
 static lv_timer_t *s_status_timer;  // 状态刷新定时器
 static lv_timer_t *s_pres_timer;    // 演讲计时器定时器
@@ -54,14 +54,14 @@ static void status_tick(lv_timer_t *timer)
 {
     (void)timer;
 
-    // 电量刷新
+    // 电量刷新 (带 BAT 前缀说明)
     int soc = bsp_battery_soc();
     if (soc >= 0 && soc <= 100) {
         char buf[16];
-        snprintf(buf, sizeof(buf), "%d%%", soc);
+        snprintf(buf, sizeof(buf), "BAT %d%%", soc);
         lv_label_set_text(s_battery_label, buf);
     } else {
-        lv_label_set_text(s_battery_label, "--");
+        lv_label_set_text(s_battery_label, "BAT --");
     }
 
     // 连接状态 (醒目显示, 参考 TikTok Remote)
@@ -190,7 +190,7 @@ static void on_key(bsp_btn_t btn, bsp_btn_ev_t ev, void *user)
 //
 // 屏幕布局 (240x320):
 // ┌──────────────────────┐
-// │              [BAT 85%]│  电量 (右上角)
+// │            [BAT 85%]│  电量(右上)
 // │                      │
 // │     PPT Remote       │  标题 (白色, 20号)
 // │                      │
@@ -211,9 +211,9 @@ static void build_ui(void)
     lv_obj_t *scr = lv_scr_act();
     lv_obj_set_style_bg_color(scr, lv_color_hex(0x000000), 0);
 
-    // 电量显示 (右上角)
+    // 电量显示 (右上角, 带 BAT 前缀)
     s_battery_label = lv_label_create(scr);
-    lv_label_set_text(s_battery_label, "--");
+    lv_label_set_text(s_battery_label, "BAT --");
     lv_obj_set_style_text_color(s_battery_label, lv_color_hex(0x00CCFF), 0);
     lv_obj_set_style_text_font(s_battery_label, &lv_font_montserrat_14, 0);
     lv_obj_align(s_battery_label, LV_ALIGN_TOP_RIGHT, -8, 8);
