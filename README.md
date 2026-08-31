@@ -1,5 +1,7 @@
 # AI Passport PPT Remote · PPT 翻页遥控器
 
+![PPT 翻页遥控器](docs/assets/cover.jpg)
+
 基于 [FoloToy AI Passport](https://github.com/FoloToy/ai-passport) 的蓝牙遥控器固件：把通行证变成一支**无线翻页笔**，站着也能掌控节奏。
 
 设备通过蓝牙向电脑模拟**标准键盘**——方向键翻页、F5 放映、Esc 退出，兼容所有主流 PPT 软件。
@@ -14,6 +16,10 @@
 | 确认键 | 长按 | 退出放映 (`Esc`) + 停止计时器 |
 
 屏幕实时显示：电池电量（右上，BAT 前缀）、蓝牙连接状态、演讲计时器、当前操作反馈。
+
+**设备界面实拍**：
+
+![设备界面](docs/assets/screen.png)
 
 ## 使用方法
 
@@ -120,6 +126,8 @@ MIT
 
 # AI Passport PPT Remote (English)
 
+![PPT Presentation Remote](docs/assets/cover.jpg)
+
 A Bluetooth remote firmware for [FoloToy AI Passport](https://github.com/FoloToy/ai-passport) that turns the badge into a **PPT clicker** — control your presentation from the podium.
 
 The device talks to your PC over Bluetooth by emulating a **standard keyboard** — arrow keys for navigation, F5 to start slideshow, Escape to exit.
@@ -134,6 +142,10 @@ The device talks to your PC over Bluetooth by emulating a **standard keyboard** 
 | OK | Long press | Exit slideshow (`Esc`) + stop timer |
 
 The screen shows battery level with a BAT prefix (top-right), Bluetooth connection status, presentation timer, and the last action.
+
+**On-device UI**:
+
+![Device screen](docs/assets/screen.png)
 
 ## Quick Start
 
