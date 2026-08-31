@@ -5,6 +5,7 @@
 //   下键 短按 → Right Arrow (下一页)
 //   确认键 短按 → 开始放映（F5 / macOS Cmd+Shift+Return / Keynote Opt+Cmd+P，自动兼容）
 //   确认键 长按 → Escape    (退出放映 + 停止计时器)
+//   上键长按 → 武装重置，3 秒内再长按下键 → 清除蓝牙配对并重启
 //
 // 兼容: PowerPoint / WPS / LibreOffice Impress / Keynote
 
@@ -46,6 +47,13 @@ static lv_timer_t *s_pres_timer;    // 演讲计时器定时器
 // ================================================================
 static bool s_pres_running = false;   // 是否正在演示
 static uint32_t s_pres_seconds = 0;   // 累计秒数
+
+// ================================================================
+// 蓝牙配对重置（按键是单 ADC 分压方案，无法双键同按，
+// 故用两步组合：上键长按武装 → 3 秒内下键长按触发）
+// ================================================================
+#define RESET_ARM_WINDOW_MS 3000
+static TickType_t s_reset_arm_tick = 0;   // 0 = 未武装
 
 // ================================================================
 // 状态刷新定时器 (500ms, 已持有 LVGL 锁)
@@ -130,6 +138,15 @@ static void on_key(bsp_btn_t btn, bsp_btn_ev_t ev, void *user)
                 lv_label_set_text(s_action_label, "<< Prev");
                 bsp_lvgl_unlock();
             }
+        } else if (ev == BSP_BTN_LONG) {
+            // 长按上键: 武装蓝牙配对重置, 3 秒内再长按下键触发
+            s_reset_arm_tick = xTaskGetTickCount();
+            ESP_LOGI(TAG, "UP long -> reset armed, hold DOWN within 3s to reset pairing");
+            if (bsp_lvgl_lock(500)) {
+                lv_label_set_text(s_action_label, "RESET: hold DOWN");
+                lv_obj_set_style_text_color(s_action_label, lv_color_hex(0xFFAA00), 0);
+                bsp_lvgl_unlock();
+            }
         }
         break;
 
@@ -141,10 +158,25 @@ static void on_key(bsp_btn_t btn, bsp_btn_ev_t ev, void *user)
                 lv_label_set_text(s_action_label, "Next >>");
                 bsp_lvgl_unlock();
             }
+        } else if (ev == BSP_BTN_LONG) {
+            // 长按下键: 若处于武装窗口内 → 重置蓝牙配对（不返回）
+            if (s_reset_arm_tick != 0 &&
+                (xTaskGetTickCount() - s_reset_arm_tick) <= pdMS_TO_TICKS(RESET_ARM_WINDOW_MS)) {
+                ESP_LOGW(TAG, "Reset BLE bonding now");
+                if (bsp_lvgl_lock(500)) {
+                    lv_label_set_text(s_action_label, "RESETTING...");
+                    lv_obj_set_style_text_color(s_action_label, lv_color_hex(0xFF4444), 0);
+                    bsp_lvgl_unlock();
+                }
+                vTaskDelay(pdMS_TO_TICKS(500));  // 留出屏幕刷新时间, 随后擦 NVS 并重启
+                ble_hid_reset_bonding();
+            }
+            s_reset_arm_tick = 0;
         }
         break;
 
     case BSP_BTN_OK:
+        s_reset_arm_tick = 0;  // 其他按键解除重置武装
         if (ev == BSP_BTN_CLICK) {
             // 短按: 开始放映（跨平台: Windows F5 / macOS PPT Cmd+Shift+Return / Keynote Opt+Cmd+P）
             ESP_LOGI(TAG, "OK -> start slideshow (cross-platform)");

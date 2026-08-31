@@ -19,6 +19,12 @@ esp_err_t ble_hid_init(void);
 void ble_hid_key_press(uint8_t keycode);
 
 /**
+ * @brief 重置蓝牙配对：擦除 NVS 中的绑定密钥并重启，重启后回到未配对状态重新广播。
+ * @note 调用后不会返回。
+ */
+void ble_hid_reset_bonding(void);
+
+/**
  * @brief 发送带修饰键的击键（如 Cmd+Shift+Return）
  * @param modifier HID 修饰键位图（0x01=L-Ctrl, 0x02=L-Shift, 0x04=L-Alt, 0x08=L-Cmd/GUI...）
  * @param keycode  HID Usage ID

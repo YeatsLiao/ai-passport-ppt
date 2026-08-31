@@ -14,6 +14,7 @@
 #include "ble_hid.h"
 
 #include "esp_log.h"
+#include "esp_system.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_bt.h"
@@ -23,6 +24,7 @@
 #include "esp_hidd.h"
 #include "esp_hidd_gatts.h"
 #include "esp_hid_common.h"
+#include "nvs_flash.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -427,6 +429,19 @@ bool ble_hid_get_peer_str(char *buf, size_t len)
              s_peer_bda[0], s_peer_bda[1], s_peer_bda[2],
              s_peer_bda[3], s_peer_bda[4], s_peer_bda[5]);
     return true;
+}
+
+void ble_hid_reset_bonding(void)
+{
+    // 清空配对记录最彻底的办法: 擦 NVS 后重启。
+    // Bluedroid 的绑定密钥全部存在 NVS 中，擦除后设备回到未配对状态。
+    ESP_LOGW(TAG, "Reset BLE bonding: erase NVS and restart...");
+    esp_err_t err = nvs_flash_erase();
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "nvs_flash_erase failed: %d", err);
+    }
+    vTaskDelay(pdMS_TO_TICKS(200));  // 留出日志输出时间, 再重启进入全新配对流程
+    esp_restart();
 }
 
 void ble_hid_stop(void)
