@@ -192,7 +192,7 @@ idf.py -p COM3 -b 460800 flash monitor
 
 ### 7. 烧录预编译固件（可选）
 
-从 [Releases](../../releases) 下载合并固件，使用 `esptool.py` 一步烧录：
+从 [Releases](../../releases) 下载合并固件（命名 `ai-passport-ppt-full.bin`，`full` 表示从 `0x0` 整片烧录），使用 `esptool.py` 一步烧录：
 
 ```bash
 esptool.py --chip esp32c3 -p COM3 --baud 460800 write_flash 0x0 ai-passport-ppt-full.bin

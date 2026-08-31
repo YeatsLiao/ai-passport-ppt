@@ -166,3 +166,44 @@ Win+Shift+Enter / Win+Alt+P 均无默认行为）。各击键间隔 80ms 避免�
 
 新增 API：`ble_hid_key_press_mod(modifier, keycode)` 支持带修饰键击键；
 修饰键位图遵循 HID Usage Tables（L-Shift=0x02, L-Alt=0x04, L-GUI/Cmd=0x08）。
+
+---
+
+## 2026-08-31 — 电量显示打磨与发布固件命名规范
+
+### UI 打磨
+
+- **右上角电量加 `BAT` 前缀**（`BAT 91%`），对齐 tiktok-remote 风格，含义更直观。
+
+### 发布固件命名
+
+```
+ai-passport-ppt-full.bin
+```
+
+- `full` = 从 `0x0` 整片烧录的合并镜像（含 bootloader + 分区表 + 应用），
+  由 `idf.py build && idf.py merge-bin` 生成 `build/merged-binary.bin` 后重命名。
+- 当前版本 v1.0.0：翻页遥控 + 跨平台开始放映 + BAT 电量前缀。
+  发布到 FoloToy AI Passport 社区的固件即此合并镜像。
+
+---
+
+## 2026-08-31 — macOS 放映快捷键仍无效：击键时序太短
+
+### 现象与原因
+
+固件已同时发送三套快捷键（F5 / ⌘⇧⏎ / ⌥⌘P），组合本身正确：
+
+- macOS PowerPoint 开始放映 = `⌘⇧⏎` (Cmd+Shift+Return)
+- macOS Keynote 播放幻灯片 = `⌥⌘P` (Option+Cmd+P)，没错，就是 Option+Command+P
+
+但 macOS 上依然无法进入放映。根因不在快捷键，而在**击键时序**：
+按下保持仅 50ms、组合键间隔仅 80ms。单键（翻页）在 macOS 没问题，
+但修饰键组合需要主机在多个 HID 轮询周期内稳定看到同一份报告才能
+完整解析出 Shift+Cmd+Return，保持太短会被 macOS 直接丢弃；Windows 容忍度更高所以正常。
+
+### 修复
+
+- 按下保持 50ms → **120ms**（`KEY_HOLD_MS`）
+- 组合键间隔 80ms → **200ms**（`KEY_COMBO_GAP_MS`）
+- 三套快捷键总耗时约 1.4s，属于可接受范围；未命中平台的组合仍无副作用

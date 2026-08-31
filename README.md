@@ -13,7 +13,7 @@
 | 确认键 | 短按 | 进入放映 (`F5`) + 启动演讲计时器 |
 | 确认键 | 长按 | 退出放映 (`Esc`) + 停止计时器 |
 
-屏幕实时显示：电池电量、蓝牙连接状态、演讲计时器、当前操作反馈。
+屏幕实时显示：电池电量（右上，BAT 前缀）、蓝牙连接状态、演讲计时器、当前操作反馈。
 
 ## 使用方法
 
@@ -88,8 +88,13 @@ idf.py -p /dev/ttyACM0 flash monitor
 ```bash
 idf.py build
 idf.py merge-bin
-copy build\merged-binary.bin build\ai-passport-ppt-full.bin
+copy build\merged-binary.bin ai-passport-ppt-full.bin
 ```
+
+**固件命名**：`ai-passport-ppt-full.bin`
+
+- `full` = 从 `0x0` 整片烧录的合并镜像（含 bootloader + 分区表 + 应用）
+- 由 `idf.py merge-bin` 生成 `build/merged-binary.bin` 后重命名，版本 v1.0.0
 
 烧录预编译固件：
 
@@ -128,7 +133,7 @@ The device talks to your PC over Bluetooth by emulating a **standard keyboard** 
 | OK | Click | Start slideshow (`F5`) + start timer |
 | OK | Long press | Exit slideshow (`Esc`) + stop timer |
 
-The screen shows battery level, Bluetooth connection status, presentation timer, and the last action.
+The screen shows battery level with a BAT prefix (top-right), Bluetooth connection status, presentation timer, and the last action.
 
 ## Quick Start
 
